@@ -1,3 +1,13 @@
+# Streamly - AI Movie & Drama Suggestion Assistant
+
+Streamly is a modern PWA (Progressive Web App) AI assistant that helps you discover and get personalized recommendations for movies and dramas based on your mood or story. Powered by advanced AI, Streamly analyzes your input and suggests the best titles to watch next.
+
+- **PWA support**: Installable on mobile and desktop, with offline capabilities.
+- **Open Graph & Twitter Card**: Social sharing with a rich preview image (`app/opengraph-image.jpg`).
+- **Manifest**: Custom icons and theme for a native app feel.
+
+---
+
 # Streamly - Modern AI Chat Application
 
 A modern ChatGPT-like web application built with Next.js 13+ (App Router) and TailwindCSS.
