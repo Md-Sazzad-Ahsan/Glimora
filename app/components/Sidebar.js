@@ -1,10 +1,13 @@
+import { TbLayoutSidebarLeftCollapse } from "react-icons/tb";
+
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   return (
     <>
-      {/* Backdrop for mobile */}
+      {/* Backdrop for mobile - clickable to close sidebar */}
       <div 
-        className={`fixed inset-0 bg-black bg-opacity-50 transition-opacity duration-300 lg:hidden ${
-          isOpen ? 'opacity-100 z-40' : 'opacity-0 pointer-events-none'
+        onClick={toggleSidebar}
+        className={`fixed inset-0 transition-opacity duration-300 lg:hidden ${
+          isOpen ? 'z-40' : 'opacity-0 pointer-events-none'
         }`}
       />
       
@@ -22,9 +25,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
               className="text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300"
               aria-label="Close Sidebar"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+              <TbLayoutSidebarLeftCollapse className="h-6 w-6" />
             </button>
           </div>
 

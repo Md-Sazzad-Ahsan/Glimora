@@ -17,7 +17,7 @@ export default function Home() {
       <Header toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
       <div className="flex">
         <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-        <ChatInterface isSidebarOpen={isSidebarOpen} />
+        <ChatInterface isSidebarOpen={isSidebarOpen} onSidebarToggle={toggleSidebar} />
       </div>
     </main>
   );
