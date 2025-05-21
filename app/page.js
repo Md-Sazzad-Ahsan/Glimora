@@ -73,19 +73,23 @@ export default function Home() {
   const handleMessagesChange = useCallback((newMessages) => {
     setMessages(newMessages);
     setChats(prev => {
-      const chatExists = prev.some(chat => chat.id === activeChatId);
-      if (chatExists) {
+      // Only create a new chat if there is no activeChatId and no chats exist
+      if (activeChatId && prev.some(chat => chat.id === activeChatId)) {
         return prev.map(chat =>
           chat.id === activeChatId
             ? { ...chat, messages: newMessages, title: getChatTitle(newMessages) }
             : chat
         );
-      } else {
-        // Add the new chat if it doesn't exist
+      } else if (!activeChatId && prev.length === 0) {
+        // First ever user message: create a new chat
+        const newId = generateId();
+        setActiveChatId(newId);
         return [
-          { id: activeChatId, messages: newMessages, title: getChatTitle(newMessages) },
-          ...prev
+          { id: newId, messages: newMessages, title: getChatTitle(newMessages) },
         ];
+      } else {
+        // Should not create a new chat for every message
+        return prev;
       }
     });
   }, [activeChatId]);

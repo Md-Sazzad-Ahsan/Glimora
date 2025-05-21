@@ -1,17 +1,18 @@
 import { TbLayoutSidebarLeftCollapse } from "react-icons/tb";
 import { PiDotsThreeVerticalBold } from "react-icons/pi";
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import { useState, useEffect, useRef } from 'react';
 
 const Sidebar = ({ isOpen, toggleSidebar, chats, onSelectChat, onNewChat, activeChatId, onEditChatTitle, onDeleteChat }) => {
   const [dropdownOpen, setDropdownOpen] = useState(null);
-  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
   const dropdownButtonRefs = useRef({});
   const [editingChatId, setEditingChatId] = useState(null);
   const [editingTitle, setEditingTitle] = useState('');
 
+  // Only close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
-      if (dropdownOpen && !event.target.closest('.sidebar-dropdown-menu')) {
+      if (dropdownOpen && !event.target.closest('.sidebar-dropdown-menu') && !event.target.closest('.dropdown-trigger')) {
         setDropdownOpen(null);
       }
     }
@@ -21,12 +22,7 @@ const Sidebar = ({ isOpen, toggleSidebar, chats, onSelectChat, onNewChat, active
 
   const handleDotsClick = (chatId) => (e) => {
     e.stopPropagation();
-    const btn = dropdownButtonRefs.current[chatId];
-    if (btn) {
-      const rect = btn.getBoundingClientRect();
-      setDropdownPos({ top: rect.top + window.scrollY - 90, left: rect.left + window.scrollX - 120 });
-    }
-    setDropdownOpen(chatId === dropdownOpen ? null : chatId);
+    setDropdownOpen(dropdownOpen === chatId ? null : chatId);
   };
 
   return (
@@ -35,15 +31,15 @@ const Sidebar = ({ isOpen, toggleSidebar, chats, onSelectChat, onNewChat, active
       <div 
         onClick={toggleSidebar}
         className={`fixed inset-0 transition-opacity duration-300 lg:hidden ${
-          isOpen ? 'z-40' : 'opacity-0 pointer-events-none'
+          isOpen ? 'z-40 pointer-events-none' : 'opacity-0 pointer-events-auto'
         }`}
       />
-      
       {/* Sidebar */}
       <div 
         className={`fixed top-0 left-0 bottom-0 w-64 bg-gray-50 dark:bg-gray-900 shadow-lg transform transition-transform duration-300 ease-in-out z-50 lg:z-30 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
+        onClick={e => e.stopPropagation()}
       >
         <div className="flex flex-col h-full">
           {/* Sidebar Header with Close Button */}
@@ -74,57 +70,83 @@ const Sidebar = ({ isOpen, toggleSidebar, chats, onSelectChat, onNewChat, active
                 chats.map(chat => (
                   <div
                     key={chat.id}
-                    className={`p-3 rounded-md cursor-pointer truncate flex items-center justify-between ${
+                    className={`p-3 rounded-md cursor-pointer truncate flex flex-col ${
                       chat.id === activeChatId
-                        ? 'bg-blue-100 dark:bg-blue-900/40' 
-                        : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                        ? 'bg-gray-100 dark:bg-gray-800' 
+                        : 'hover:bg-gray-200 dark:hover:bg-gray-700'
                     }`}
                   >
-                    <div
-                      className="flex-1 min-w-0"
-                      onClick={() => onSelectChat(chat.id)}
-                    >
-                      {editingChatId === chat.id ? (
-                        <input
-                          className="w-full px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                          value={editingTitle}
-                          autoFocus
-                          onChange={e => setEditingTitle(e.target.value)}
-                          onBlur={() => {
-                            if (editingTitle.trim()) {
-                              onEditChatTitle(chat.id, editingTitle.trim());
-                            }
-                            setEditingChatId(null);
-                            setEditingTitle('');
-                          }}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') {
+                    <div className="flex items-center justify-between">
+                      <div
+                        className="flex-1 min-w-0"
+                        onClick={() => onSelectChat(chat.id)}
+                      >
+                        {editingChatId === chat.id && editingTitle !== '' ? (
+                          <input
+                            className="w-full px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            value={editingTitle}
+                            autoFocus
+                            onChange={e => setEditingTitle(e.target.value)}
+                            onBlur={() => {
                               if (editingTitle.trim()) {
                                 onEditChatTitle(chat.id, editingTitle.trim());
                               }
                               setEditingChatId(null);
                               setEditingTitle('');
-                            }
-                            if (e.key === 'Escape') {
-                              setEditingChatId(null);
-                              setEditingTitle('');
-                            }
-                          }}
-                        />
-                      ) : (
-                        <p className="text-sm text-gray-800 dark:text-gray-200 truncate">{chat.title || 'Untitled Chat'}</p>
-                      )}
-                    </div>
-                    <div className="ml-2">
+                            }}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') {
+                                if (editingTitle.trim()) {
+                                  onEditChatTitle(chat.id, editingTitle.trim());
+                                }
+                                setEditingChatId(null);
+                                setEditingTitle('');
+                              }
+                              if (e.key === 'Escape') {
+                                setEditingChatId(null);
+                                setEditingTitle('');
+                              }
+                            }}
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-800 dark:text-gray-200 truncate">{chat.title || 'Untitled Chat'}</p>
+                        )}
+                      </div>
                       <button
                         type="button"
                         ref={el => (dropdownButtonRefs.current[chat.id] = el)}
-                        className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"
+                        className="dropdown-trigger p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 ml-2"
                         onClick={handleDotsClick(chat.id)}
                       >
                         <PiDotsThreeVerticalBold className="h-5 w-5" />
                       </button>
                     </div>
+                    {/* Only show icon row if dropdownOpen is not null and matches chat.id */}
+                    {dropdownOpen !== null && dropdownOpen === chat.id && (
+                      <div className="sidebar-dropdown-menu flex flex-row items-end justify-end gap-2 mt-2 px-2 pt-1 border-t border-gray-50 dark:border-gray-700 z-50 sm:flex" onClick={e => e.stopPropagation()}>
+                        <button
+                          className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                          title="Edit Title"
+                          onClick={() => {
+                            setEditingChatId(chat.id);
+                            setEditingTitle(chat?.title || '');
+                            setDropdownOpen(null);
+                          }}
+                        >
+                          <FiEdit2 className="h-5 w-5 text-gray-700 dark:text-gray-200" />
+                        </button>
+                        <button
+                          className="p-2 rounded hover:bg-red-100 dark:hover:bg-red-900"
+                          title="Delete Chat"
+                          onClick={() => {
+                            setDropdownOpen(null);
+                            onDeleteChat(chat.id);
+                          }}
+                        >
+                          <FiTrash2 className="h-5 w-5 text-red-500 dark:text-red-400" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))
               ) : (
@@ -140,52 +162,6 @@ const Sidebar = ({ isOpen, toggleSidebar, chats, onSelectChat, onNewChat, active
           </div>
         </div>
       </div>
-
-      {/* Render dropdown menu in a fixed position at the end of the sidebar */}
-      {dropdownOpen && (
-        <div
-          className="sidebar-dropdown-menu"
-          style={{
-            position: 'fixed',
-            top: dropdownPos.top,
-            left: dropdownPos.left,
-            zIndex: 9999,
-            background: 'white',
-            border: '2px solid #222',
-            color: '#222',
-            width: '180px',
-            minHeight: '80px',
-            fontSize: '18px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'stretch',
-            borderRadius: '8px',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.15)'
-          }}
-        >
-          <button
-            className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-            onClick={() => {
-              setEditingChatId(dropdownOpen);
-              const chat = chats.find(c => c.id === dropdownOpen);
-              setEditingTitle(chat?.title || '');
-              setDropdownOpen(null);
-            }}
-          >
-            Edit Title
-          </button>
-          <button
-            className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-            onClick={() => {
-              setDropdownOpen(null);
-              onDeleteChat(dropdownOpen);
-            }}
-          >
-            Delete Chat
-          </button>
-        </div>
-      )}
     </>
   );
 };
