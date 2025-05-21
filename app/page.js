@@ -58,7 +58,7 @@ export default function Home() {
   // Create a new chat
   const handleNewChat = useCallback(() => {
     const newId = generateId();
-    const newChat = { id: newId, title: 'My Queries from here...', messages: [] };
+    const newChat = { id: newId, title: 'New Chat...', messages: [] };
     setChats(prev => [newChat, ...prev]);
     setActiveChatId(newId);
     setMessages([]);
@@ -90,6 +90,30 @@ export default function Home() {
     });
   }, [activeChatId]);
 
+  const handleEditChatTitle = useCallback((chatId, newTitle) => {
+    setChats(prev =>
+      prev.map(chat =>
+        chat.id === chatId ? { ...chat, title: newTitle } : chat
+      )
+    );
+  }, []);
+
+  const handleDeleteChat = useCallback((chatId) => {
+    setChats(prev => {
+      const updated = prev.filter(chat => chat.id !== chatId);
+      if (activeChatId === chatId) {
+        if (updated.length > 0) {
+          setActiveChatId(updated[0].id);
+          setMessages(updated[0].messages || []);
+        } else {
+          setActiveChatId(null);
+          setMessages([]);
+        }
+      }
+      return updated;
+    });
+  }, [activeChatId]);
+
   return (
     <main className="min-h-screen bg-white dark:bg-gray-800">
       <Header toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
@@ -101,6 +125,8 @@ export default function Home() {
           onSelectChat={handleSelectChat}
           onNewChat={handleNewChat}
           activeChatId={activeChatId}
+          onEditChatTitle={handleEditChatTitle}
+          onDeleteChat={handleDeleteChat}
         />
         <ChatInterface
           isSidebarOpen={isSidebarOpen}

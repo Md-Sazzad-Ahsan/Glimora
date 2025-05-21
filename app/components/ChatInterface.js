@@ -221,8 +221,8 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages }) => {
           accumulatedContent += text;
 
           const newMessages = [...baseMessages, {
-            role: 'assistant',
-            content: accumulatedContent
+              role: 'assistant',
+              content: accumulatedContent
           }];
           setMessages(newMessages);
         }
@@ -287,8 +287,8 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages }) => {
           accumulatedContent += text;
 
           streamingMessages = [...baseMessages, {
-            role: 'assistant',
-            content: accumulatedContent
+              role: 'assistant',
+              content: accumulatedContent
           }];
           setMessages(streamingMessages);
         }
@@ -353,19 +353,13 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages }) => {
                             );
                           },
                           p({children}) {
-                            // Check if the children contain a code block
-                            const hasCodeBlock = React.Children.toArray(children).some(
-                              child => 
-                                React.isValidElement(child) && 
-                                (child.type === 'pre' || 
-                                 (child.type === 'div' && child.props.className?.includes('not-prose')))
+                            // If any child is a React element (block or inline), use a fragment
+                            const hasElement = React.Children.toArray(children).some(
+                              child => React.isValidElement(child)
                             );
-                            
-                            // If it contains a code block, render without p wrapper
-                            if (hasCodeBlock) {
-                              return children;
+                            if (hasElement) {
+                              return <>{children}</>;
                             }
-                            
                             return <p className="mb-4 last:mb-0">{children}</p>;
                           },
                           ul({children}) {

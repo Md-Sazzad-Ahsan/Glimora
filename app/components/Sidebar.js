@@ -2,10 +2,12 @@ import { TbLayoutSidebarLeftCollapse } from "react-icons/tb";
 import { PiDotsThreeVerticalBold } from "react-icons/pi";
 import { useState, useEffect, useRef } from 'react';
 
-const Sidebar = ({ isOpen, toggleSidebar, chats, onSelectChat, onNewChat, activeChatId }) => {
+const Sidebar = ({ isOpen, toggleSidebar, chats, onSelectChat, onNewChat, activeChatId, onEditChatTitle, onDeleteChat }) => {
   const [dropdownOpen, setDropdownOpen] = useState(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
   const dropdownButtonRefs = useRef({});
+  const [editingChatId, setEditingChatId] = useState(null);
+  const [editingTitle, setEditingTitle] = useState('');
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -82,7 +84,36 @@ const Sidebar = ({ isOpen, toggleSidebar, chats, onSelectChat, onNewChat, active
                       className="flex-1 min-w-0"
                       onClick={() => onSelectChat(chat.id)}
                     >
-                      <p className="text-sm text-gray-800 dark:text-gray-200 truncate">{chat.title || 'Untitled Chat'}</p>
+                      {editingChatId === chat.id ? (
+                        <input
+                          className="w-full px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          value={editingTitle}
+                          autoFocus
+                          onChange={e => setEditingTitle(e.target.value)}
+                          onBlur={() => {
+                            if (editingTitle.trim()) {
+                              onEditChatTitle(chat.id, editingTitle.trim());
+                            }
+                            setEditingChatId(null);
+                            setEditingTitle('');
+                          }}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              if (editingTitle.trim()) {
+                                onEditChatTitle(chat.id, editingTitle.trim());
+                              }
+                              setEditingChatId(null);
+                              setEditingTitle('');
+                            }
+                            if (e.key === 'Escape') {
+                              setEditingChatId(null);
+                              setEditingTitle('');
+                            }
+                          }}
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-800 dark:text-gray-200 truncate">{chat.title || 'Untitled Chat'}</p>
+                      )}
                     </div>
                     <div className="ml-2">
                       <button
@@ -133,8 +164,26 @@ const Sidebar = ({ isOpen, toggleSidebar, chats, onSelectChat, onNewChat, active
             boxShadow: '0 4px 16px rgba(0,0,0,0.15)'
           }}
         >
-          <button className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Edit Title</button>
-          <button className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Delete Chat</button>
+          <button
+            className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+            onClick={() => {
+              setEditingChatId(dropdownOpen);
+              const chat = chats.find(c => c.id === dropdownOpen);
+              setEditingTitle(chat?.title || '');
+              setDropdownOpen(null);
+            }}
+          >
+            Edit Title
+          </button>
+          <button
+            className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+            onClick={() => {
+              setDropdownOpen(null);
+              onDeleteChat(dropdownOpen);
+            }}
+          >
+            Delete Chat
+          </button>
         </div>
       )}
     </>
