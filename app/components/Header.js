@@ -20,10 +20,10 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
           </Link>
         </div>
         <div className="flex items-center space-x-4">
-          <button className="hidden sm:inline-flex px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
+          <button className="hidden sm:inline-flex px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">
             Sign In
           </button>
-          <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
+          <button className="px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-md hover:bg-gray-700">
             Sign Up
           </button>
         </div>

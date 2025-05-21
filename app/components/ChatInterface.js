@@ -74,9 +74,8 @@ const ProcessingMessage = () => (
   </div>
 );
 
-const ChatInterface = ({ isSidebarOpen, messages, setMessages }) => {
+const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsLoading }) => {
   const [inputMessage, setInputMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [imageErrors, setImageErrors] = useState({});
   const [error, setError] = useState(null);
@@ -87,6 +86,7 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages }) => {
   const [showFileDropdown, setShowFileDropdown] = useState(false);
   const [showFileModal, setShowFileModal] = useState(false);
   const fileInputRef = useRef(null);
+  const sendingRef = useRef(false);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -105,6 +105,14 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages }) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading]);
+
+  // Ensure isLoading stays true for one render after sending
+  useEffect(() => {
+    if (sendingRef.current) {
+      setIsLoading(true);
+      sendingRef.current = false;
+    }
+  }, [messages]);
 
   const handleImageError = (src) => {
     setImageErrors(prev => ({ ...prev, [src]: true }));
@@ -241,11 +249,12 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages }) => {
     } else {
       // Regular message handling without file
       let baseMessages = [...messages, userMessage];
+      sendingRef.current = true;
+      setIsLoading(true);
       if (!customMessage) {
         setMessages(baseMessages);
         setInputMessage('');
       }
-      setIsLoading(true);
       setError(null);
       setErrorDetails(null);
 
@@ -313,13 +322,13 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages }) => {
       }`}
     >
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-4 space-y-6">
+        <div className="max-w-5xl mx-auto px-5 space-y-6">
           {messages.map((message, index) => (
             <div key={index} className="space-y-4 mt-4">
               <div className={`flex items-start ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[80%] ${
                   message.role === 'user' 
-                    ? 'bg-blue-600 text-white rounded-lg px-4 py-2 shadow-sm' 
+                    ? 'bg-gray-600 text-white rounded-lg px-4 py-2 shadow-sm' 
                     : 'text-gray-800 dark:text-gray-200'
                 }`}>
                   {message.role === 'user' ? (
@@ -404,7 +413,7 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages }) => {
                 ) : isProcessing ? (
                   <ProcessingMessage />
                 ) : (
-                  <div className="font-mono text-sm text-gray-600 dark:text-gray-300">
+                  <div className="font-mono text-sm text-gray-500 dark:text-gray-200 shadow-sm">
                     <div className="flex items-center space-x-2">
                       <span>Thinking</span>
                       <span className="inline-flex space-x-1">
@@ -427,7 +436,7 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages }) => {
         <div className="relative max-w-5xl mx-auto">
           <div className="relative">
             <form onSubmit={handleSubmit} className="px-4">
-              <div className="relative rounded-lg border border-gray-200 dark:border-gray-700 shadow-inner bg-white dark:bg-gray-600">
+              <div className="relative rounded-xl border border-gray-200 dark:border-gray-700 shadow-inner bg-white dark:bg-gray-600">
                 {selectedFile && (
                   <div className="px-3 pt-2">
                     <div className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-600">
@@ -469,9 +478,9 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages }) => {
                   onClick={isLoading ? (e) => { e.preventDefault(); stopGenerating(); } : undefined}
                 >
                   {isLoading ? (
-                    <GrStatusPlaceholder className="h-5 w-5" />
+                    <GrStatusPlaceholder className="h-7 w-7 text-gray-400 dark:text-gray-100 border border-gray-600 dark:border-gray-100 rounded-md bg-gray-300" />
                   ) : (
-                    <BsFillArrowUpCircleFill className="h-8 w-8 text-gray-100" />
+                    <BsFillArrowUpCircleFill className="h-8 w-8 text-gray-400 dark:text-gray-100" />
                   )}
                 </button>
                 <div className="px-3 py-2">
@@ -483,7 +492,7 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages }) => {
                         className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-600"
                         onClick={() => setShowFileDropdown(!showFileDropdown)}
                       >
-                        <MdOutlineAttachFile className="h-4 w-4" />
+                        <MdOutlineAttachFile className="h-4 w-4 text-gray-400 dark:text-gray-200" />
                       </button>
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                         Attach file
@@ -560,7 +569,7 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages }) => {
                 Cancel
               </button>
               <button
-                className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+                className="px-4 py-2 text-sm bg-gray-500 text-white rounded hover:bg-gray-600"
                 onClick={() => fileInputRef.current?.click()}
               >
                 Browse

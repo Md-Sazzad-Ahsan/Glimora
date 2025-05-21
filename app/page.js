@@ -24,6 +24,7 @@ export default function Home() {
   const [chats, setChats] = useState([]); // [{id, title, messages}]
   const [activeChatId, setActiveChatId] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Load chats from localStorage on mount
   useEffect(() => {
@@ -138,6 +139,8 @@ export default function Home() {
           messages={messages}
           setMessages={handleMessagesChange}
           key={activeChatId}
+          isLoading={isLoading}
+          setIsLoading={setIsLoading}
         />
       </div>
     </main>

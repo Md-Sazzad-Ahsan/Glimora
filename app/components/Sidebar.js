@@ -31,7 +31,7 @@ const Sidebar = ({ isOpen, toggleSidebar, chats, onSelectChat, onNewChat, active
       <div 
         onClick={toggleSidebar}
         className={`fixed inset-0 transition-opacity duration-300 lg:hidden ${
-          isOpen ? 'z-40 pointer-events-none' : 'opacity-0 pointer-events-auto'
+          isOpen ? 'z-40 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       />
       {/* Sidebar */}
@@ -55,7 +55,7 @@ const Sidebar = ({ isOpen, toggleSidebar, chats, onSelectChat, onNewChat, active
 
           <div className="p-4">
             <button
-              className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 flex items-center justify-center"
+              className="w-full pr-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-md hover:bg-gray-700 flex items-center justify-center"
               onClick={onNewChat}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -81,24 +81,22 @@ const Sidebar = ({ isOpen, toggleSidebar, chats, onSelectChat, onNewChat, active
                         className="flex-1 min-w-0"
                         onClick={() => onSelectChat(chat.id)}
                       >
-                        {editingChatId === chat.id && editingTitle !== '' ? (
+                        {editingChatId === chat.id ? (
                           <input
-                            className="w-full px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            className="w-full px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-800"
                             value={editingTitle}
                             autoFocus
                             onChange={e => setEditingTitle(e.target.value)}
                             onBlur={() => {
-                              if (editingTitle.trim()) {
-                                onEditChatTitle(chat.id, editingTitle.trim());
-                              }
+                              const trimmed = editingTitle.trim();
+                              onEditChatTitle(chat.id, trimmed || 'Untitled Chat');
                               setEditingChatId(null);
                               setEditingTitle('');
                             }}
                             onKeyDown={e => {
                               if (e.key === 'Enter') {
-                                if (editingTitle.trim()) {
-                                  onEditChatTitle(chat.id, editingTitle.trim());
-                                }
+                                const trimmed = editingTitle.trim();
+                                onEditChatTitle(chat.id, trimmed || 'Untitled Chat');
                                 setEditingChatId(null);
                                 setEditingTitle('');
                               }
