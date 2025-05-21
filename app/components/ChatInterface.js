@@ -171,12 +171,14 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
     if (e) e.preventDefault();
     if ((!inputMessage.trim() && !customMessage && !selectedFile) || isLoading) return;
 
+    // Always construct userMessage from input or customMessage
     const userMessage = customMessage || { role: 'user', content: inputMessage };
+    // Always append userMessage to messages for baseMessages
+    const baseMessages = [...messages, userMessage];
     
     // Check if we have a file to process
     const fileToProcess = fileInputRef.current?.fileToProcess;
     if (fileToProcess) {
-      const baseMessages = [...messages, userMessage];
       setMessages(baseMessages);
       setInputMessage('');
       setIsLoading(true);
@@ -247,14 +249,10 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
         setSelectedFile(null);
       }
     } else {
-      // Regular message handling without file
-      let baseMessages = [...messages, userMessage];
       sendingRef.current = true;
       setIsLoading(true);
-      if (!customMessage) {
-        setMessages(baseMessages);
-        setInputMessage('');
-      }
+      setMessages(baseMessages);
+      setInputMessage('');
       setError(null);
       setErrorDetails(null);
 
@@ -564,7 +562,14 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
             <div className="flex justify-end space-x-3">
               <button
                 className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
-                onClick={() => setShowFileModal(false)}
+                onClick={() => {
+                  setShowFileModal(false);
+                  setSelectedFile(null);
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                    fileInputRef.current.fileToProcess = null;
+                  }
+                }}
               >
                 Cancel
               </button>
