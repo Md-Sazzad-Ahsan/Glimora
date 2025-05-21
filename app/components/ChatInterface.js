@@ -14,15 +14,6 @@ import { RiImageAddFill } from "react-icons/ri";
 import { AiFillFilePdf } from "react-icons/ai";
 import { FaSpinner } from "react-icons/fa";
 
-// Add CSS to hide scrollbars
-const scrollbarHiddenStyles = {
-  scrollbarWidth: 'none',  // Firefox
-  msOverflowStyle: 'none',  // IE and Edge
-  '&::-webkit-scrollbar': {
-    display: 'none'  // Chrome, Safari, and Opera
-  }
-};
-
 // Helper function to check if a URL is an image
 const isImageUrl = (url) => {
   return /\.(jpg|jpeg|png|gif|webp)$/i.test(url) || url.startsWith('data:image/');
@@ -83,8 +74,7 @@ const ProcessingMessage = () => (
   </div>
 );
 
-const ChatInterface = ({ isSidebarOpen }) => {
-  const [messages, setMessages] = useState([]);
+const ChatInterface = ({ isSidebarOpen, messages, setMessages }) => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -178,7 +168,8 @@ const ChatInterface = ({ isSidebarOpen }) => {
     // Check if we have a file to process
     const fileToProcess = fileInputRef.current?.fileToProcess;
     if (fileToProcess) {
-      setMessages(prev => [...prev, userMessage]);
+      const baseMessages = [...messages, userMessage];
+      setMessages(baseMessages);
       setInputMessage('');
       setIsLoading(true);
       setError(null);
@@ -197,8 +188,7 @@ const ChatInterface = ({ isSidebarOpen }) => {
           },
           body: JSON.stringify({
             messages: [
-              ...messages,
-              userMessage,
+              ...baseMessages,
               {
                 role: 'system',
                 content: `Processing PDF file: ${fileToProcess.name}\n\n${text}`
@@ -220,7 +210,8 @@ const ChatInterface = ({ isSidebarOpen }) => {
         let accumulatedContent = '';
 
         const assistantMessage = { role: 'assistant', content: '' };
-        setMessages(prev => [...prev, assistantMessage]);
+        const newMessages = [...baseMessages, assistantMessage];
+        setMessages(newMessages);
 
         while (true) {
           const { done, value } = await reader.read();
@@ -229,14 +220,11 @@ const ChatInterface = ({ isSidebarOpen }) => {
           const text = decoder.decode(value);
           accumulatedContent += text;
 
-          setMessages(prev => {
-            const newMessages = [...prev];
-            newMessages[newMessages.length - 1] = {
-              role: 'assistant',
-              content: accumulatedContent
-            };
-            return newMessages;
-          });
+          const newMessages = [...baseMessages, {
+            role: 'assistant',
+            content: accumulatedContent
+          }];
+          setMessages(newMessages);
         }
 
       } catch (error) {
@@ -252,8 +240,9 @@ const ChatInterface = ({ isSidebarOpen }) => {
       }
     } else {
       // Regular message handling without file
+      let baseMessages = [...messages, userMessage];
       if (!customMessage) {
-        setMessages(prev => [...prev, userMessage]);
+        setMessages(baseMessages);
         setInputMessage('');
       }
       setIsLoading(true);
@@ -283,7 +272,8 @@ const ChatInterface = ({ isSidebarOpen }) => {
         }
 
         const assistantMessage = { role: 'assistant', content: '' };
-        setMessages(prev => [...prev, assistantMessage]);
+        let streamingMessages = [...baseMessages, assistantMessage];
+        setMessages(streamingMessages);
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -296,14 +286,11 @@ const ChatInterface = ({ isSidebarOpen }) => {
           const text = decoder.decode(value);
           accumulatedContent += text;
 
-          setMessages(prev => {
-            const newMessages = [...prev];
-            newMessages[newMessages.length - 1] = {
-              role: 'assistant',
-              content: accumulatedContent
-            };
-            return newMessages;
-          });
+          streamingMessages = [...baseMessages, {
+            role: 'assistant',
+            content: accumulatedContent
+          }];
+          setMessages(streamingMessages);
         }
       } catch (error) {
         // Only show error if it's not an abort error
@@ -324,9 +311,8 @@ const ChatInterface = ({ isSidebarOpen }) => {
       className={`flex flex-col h-[calc(100vh-4rem)] bg-white dark:bg-gray-800 transition-all duration-300 ease-in-out w-full pt-20 ${
         isSidebarOpen ? 'lg:ml-64' : ''
       }`}
-      style={scrollbarHiddenStyles}
     >
-      <div className="flex-1 overflow-y-auto" style={scrollbarHiddenStyles}>
+      <div className="flex-1 overflow-y-auto">
         <div className="max-w-5xl mx-auto px-4 space-y-6">
           {messages.map((message, index) => (
             <div key={index} className="space-y-4 mt-4">
@@ -353,7 +339,7 @@ const ChatInterface = ({ isSidebarOpen }) => {
                             ) : (
                               <div className="not-prose my-4">
                                 <div className="relative group bg-gray-800 dark:bg-gray-900 rounded-md">
-                                  <code className={`${className || ''} block p-4 overflow-x-auto`} style={scrollbarHiddenStyles} {...props}>
+                                  <code className={`${className || ''} block p-4 overflow-x-auto`} {...props}>
                                     {children}
                                   </code>
                                   <button 
@@ -443,11 +429,11 @@ const ChatInterface = ({ isSidebarOpen }) => {
       </div>
       
       {/* Input area */}
-      <div className="border-t border-gray-200 dark:border-gray-700">
+      <div className="">
         <div className="relative max-w-5xl mx-auto">
           <div className="relative">
-            <form onSubmit={handleSubmit} className="p-4">
-              <div className="relative rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700">
+            <form onSubmit={handleSubmit} className="px-4">
+              <div className="relative rounded-lg border border-gray-200 dark:border-gray-700 shadow-inner bg-white dark:bg-gray-600">
                 {selectedFile && (
                   <div className="px-3 pt-2">
                     <div className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-600">
@@ -469,10 +455,9 @@ const ChatInterface = ({ isSidebarOpen }) => {
                   </div>
                 )}
                 <textarea
-                  className={`w-full px-3 ${selectedFile ? 'pt-2' : 'pt-3'} pb-3 pr-14 bg-transparent text-gray-800 dark:text-gray-200 resize-none focus:outline-none`}
-                  style={scrollbarHiddenStyles}
+                  className={`w-full px-3 ${selectedFile ? 'pt-2' : 'pt-5'} pb-3 pr-14 bg-transparent text-gray-800 dark:text-gray-200 resize-none focus:outline-none pl-5`}
                   rows="1"
-                  placeholder="Type your message here..."
+                  placeholder="Ask anything..."
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyDown={(e) => {
@@ -492,7 +477,7 @@ const ChatInterface = ({ isSidebarOpen }) => {
                   {isLoading ? (
                     <GrStatusPlaceholder className="h-5 w-5" />
                   ) : (
-                    <BsFillArrowUpCircleFill className="h-5 w-5" />
+                    <BsFillArrowUpCircleFill className="h-8 w-8 text-gray-100" />
                   )}
                 </button>
                 <div className="px-3 py-2">

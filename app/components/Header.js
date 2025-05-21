@@ -3,7 +3,7 @@ import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
 
 const Header = ({ toggleSidebar, isSidebarOpen }) => {
   return (
-    <header className={`fixed top-0 right-0 z-50 bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700 transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64 left-0' : 'left-0'}`}>
+    <header className={`fixed top-0 right-0 z-50 bg-white shadow-md dark:bg-gray-800 transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64 left-0' : 'left-0'}`}>
       <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center space-x-4">
           {!isSidebarOpen && (
