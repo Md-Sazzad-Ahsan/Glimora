@@ -26,24 +26,28 @@ export default function Home() {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Load chats from localStorage on mount
+  // Load chats from localStorage on mount, but always start with a new chat
   useEffect(() => {
     const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    let loadedChats = [];
     if (stored) {
       try {
-        const parsed = JSON.parse(stored);
-        setChats(parsed);
-        if (parsed.length > 0) {
-          setActiveChatId(parsed[0].id);
-          setMessages(parsed[0].messages || []);
-        }
+        loadedChats = JSON.parse(stored);
       } catch {}
     }
+    // Always create a new chat on mount
+    const newId = generateId();
+    const newChat = { id: newId, title: 'New Chat...', messages: [] };
+    setChats([newChat, ...loadedChats]);
+    setActiveChatId(newId);
+    setMessages([]);
   }, []);
 
   // Save chats to localStorage whenever chats change
   useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(chats));
+    // Only save chats that have at least one message
+    const nonEmptyChats = chats.filter(chat => chat.messages && chat.messages.length > 0);
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(nonEmptyChats));
   }, [chats]);
 
   // When activeChatId changes, update messages

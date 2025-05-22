@@ -321,6 +321,30 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
     >
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-5xl mx-auto px-5 space-y-6">
+          {messages.length === 0 && !isLoading && (
+            <div className="text-center text-gray-500 dark:text-gray-300 mt-60 mb-8 px-5   select-none">
+              <h2 className="text-2xl md:text-3xl font-semibold mb-2">Welcome to Streamly!</h2>
+              <p className="text-base">Start a conversation or ask for a Movie & Drama suggestion based on your mood or story.</p>
+              <div className="flex flex-wrap justify-center gap-3 mt-4">
+                {[
+                  { label: 'Happy', color: 'bg-yellow-200 text-yellow-800 dark:bg-yellow-400 dark:text-yellow-900' },
+                  { label: 'Sad', color: 'bg-blue-200 text-blue-800 dark:bg-blue-400 dark:text-blue-900' },
+                  { label: 'Romantic', color: 'bg-pink-200 text-pink-800 dark:bg-pink-400 dark:text-pink-900' },
+                  { label: 'Suspense', color: 'bg-purple-200 text-purple-800 dark:bg-purple-400 dark:text-purple-900' },
+                  { label: 'Nostalgic', color: 'bg-orange-200 text-orange-800 dark:bg-orange-400 dark:text-orange-900' },
+                  { label: 'Lonely', color: 'bg-gray-300 text-gray-800 dark:bg-gray-500 dark:text-gray-900' },
+                  { label: 'Adventure', color: 'bg-green-200 text-green-800 dark:bg-green-400 dark:text-green-900' },
+                  { label: 'Comedy', color: 'bg-lime-200 text-lime-800 dark:bg-lime-400 dark:text-lime-900' },
+                  { label: 'Thriller', color: 'bg-red-200 text-red-800 dark:bg-red-400 dark:text-red-900' },
+                  { label: 'Family', color: 'bg-teal-200 text-teal-800 dark:bg-teal-400 dark:text-teal-900' },
+                ].map((kw) => (
+                  <span key={kw.label} className={`${kw.color} px-3 py-1 rounded-full text-xs font-medium select-none`}>
+                    {kw.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           {messages.map((message, index) => (
             <div key={index} className="space-y-4 mt-4">
               <div className={`flex items-start ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
