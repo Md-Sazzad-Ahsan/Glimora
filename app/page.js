@@ -37,7 +37,7 @@ export default function Home() {
     }
     // Always create a new chat on mount
     const newId = generateId();
-    const newChat = { id: newId, title: 'New Chat...', messages: [] };
+    const newChat = { id: newId, title: 'Untitled Chat...', messages: [] };
     setChats([newChat, ...loadedChats]);
     setActiveChatId(newId);
     setMessages([]);
@@ -63,7 +63,7 @@ export default function Home() {
   // Create a new chat
   const handleNewChat = useCallback(() => {
     const newId = generateId();
-    const newChat = { id: newId, title: 'New Chat...', messages: [] };
+    const newChat = { id: newId, title: 'Untitled Chat...', messages: [] };
     setChats(prev => [newChat, ...prev]);
     setActiveChatId(newId);
     setMessages([]);
@@ -77,26 +77,11 @@ export default function Home() {
   // When messages change, update the current chat in chats
   const handleMessagesChange = useCallback((newMessages) => {
     setMessages(newMessages);
-    setChats(prev => {
-      // Only create a new chat if there is no activeChatId and no chats exist
-      if (activeChatId && prev.some(chat => chat.id === activeChatId)) {
-        return prev.map(chat =>
-          chat.id === activeChatId
-            ? { ...chat, messages: newMessages, title: getChatTitle(newMessages) }
-            : chat
-        );
-      } else if (!activeChatId && prev.length === 0) {
-        // First ever user message: create a new chat
-        const newId = generateId();
-        setActiveChatId(newId);
-        return [
-          { id: newId, messages: newMessages, title: getChatTitle(newMessages) },
-        ];
-      } else {
-        // Should not create a new chat for every message
-        return prev;
-      }
-    });
+    setChats(prev =>
+      prev.map(chat =>
+        chat.id === activeChatId ? { ...chat, messages: newMessages, title: getChatTitle(newMessages) } : chat
+      )
+    );
   }, [activeChatId]);
 
   const handleEditChatTitle = useCallback((chatId, newTitle) => {

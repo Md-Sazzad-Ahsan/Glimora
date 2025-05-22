@@ -322,7 +322,7 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-5xl mx-auto px-5 space-y-6">
           {messages.length === 0 && !isLoading && (
-            <div className="text-center text-gray-500 dark:text-gray-300 mt-60 mb-8 px-5   select-none">
+            <div className="text-center text-gray-500 dark:text-gray-300 mt-72 md:mt-60 mb-8 px-5   select-none">
               <h2 className="text-2xl md:text-3xl font-semibold mb-2">Welcome to Streamly!</h2>
               <p className="text-base">Start a conversation or ask for a Movie & Drama suggestion based on your mood or story.</p>
               <div className="flex flex-wrap justify-center gap-3 mt-4">
@@ -435,7 +435,7 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
                 ) : isProcessing ? (
                   <ProcessingMessage />
                 ) : (
-                  <div className="font-mono text-sm text-gray-500 dark:text-gray-200 shadow-sm">
+                  <div className="font-mono text-sm text-gray-500 dark:text-gray-200 shadow-sm py-2">
                     <div className="flex items-center space-x-2">
                       <span>Thinking</span>
                       <span className="inline-flex space-x-1">
