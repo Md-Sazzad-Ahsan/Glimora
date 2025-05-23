@@ -1,6 +1,6 @@
 {
-  "name": "Streamly - AI Movie & Drama Suggestion Assistant",
-  "short_name": "Streamly",
+  "name": "Glimora - AI Movie & Drama Suggestion Assistant",
+  "short_name": "Glimora",
   "description": "Get personalized movie and drama recommendations with AI. Share your mood or story and discover what to watch next!",
   "start_url": "/",
   "display": "standalone",

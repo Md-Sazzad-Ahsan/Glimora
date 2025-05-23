@@ -5,7 +5,7 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import ChatInterface from './components/ChatInterface';
 
-const LOCAL_STORAGE_KEY = 'streamly_chats';
+const LOCAL_STORAGE_KEY = 'glimora_chats';
 
 function generateId() {
   return Math.random().toString(36).substr(2, 9) + Date.now();

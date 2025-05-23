@@ -13,7 +13,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
   defaultHeaders: {
     "HTTP-Referer": "http://localhost:3000",
-    "X-Title": "Streamly Chat",
+    "X-Title": "Glimora Chat",
     "Content-Type": "application/json",
   },
 });
