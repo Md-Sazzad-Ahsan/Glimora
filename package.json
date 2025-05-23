@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@langchain/community": "^0.3.43",
+    "@tavily/core": "^0.5.2",
     "docx": "^9.5.0",
     "langchain": "^0.3.26",
     "next": "15.3.2",
