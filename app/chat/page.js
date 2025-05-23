@@ -5,7 +5,7 @@ import Sidebar from '../components/Sidebar';
 import ChatInterface from '../components/ChatInterface';
 import MovieCard from '../components/MovieCard';
 
-const LOCAL_STORAGE_KEY = 'streamly_chats_chatpage';
+const LOCAL_STORAGE_KEY = 'glimora_chats_chatpage';
 
 function generateId() {
   return Math.random().toString(36).substr(2, 9) + Date.now();

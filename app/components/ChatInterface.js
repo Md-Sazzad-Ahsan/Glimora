@@ -13,66 +13,19 @@ import { MdOutlineAttachFile, MdOutlineLightbulb } from "react-icons/md";
 import { RiImageAddFill } from "react-icons/ri";
 import { AiFillFilePdf } from "react-icons/ai";
 import { FaSpinner } from "react-icons/fa";
+import ChatMessage from './ChatInterface/ChatMessage';
+import ChatInputArea from './ChatInterface/ChatInputArea';
+import FileUploadModal from './ChatInterface/FileUploadModal';
+import ErrorMessage from './ChatInterface/ErrorMessage';
+import ProcessingMessage from './ChatInterface/ProcessingMessage';
+import WelcomeMessage from './ChatInterface/WelcomeMessage';
+import LoadingIndicator from './ChatInterface/LoadingIndicator';
+import ChatMessagesList from './ChatInterface/ChatMessagesList';
 
 // Helper function to check if a URL is an image
 const isImageUrl = (url) => {
   return /\.(jpg|jpeg|png|gif|webp)$/i.test(url) || url.startsWith('data:image/');
 };
-
-const ErrorMessage = ({ error, details }) => (
-  <div className="text-red-500 dark:text-red-400 font-mono text-sm space-y-2">
-    <p className="font-semibold">{error}</p>
-    {details && (
-      <div className="text-xs space-y-2">
-        <p className="text-gray-600 dark:text-gray-300">{details.message}</p>
-        {details.provider && (
-          <p className="text-gray-500 dark:text-gray-400">Provider: {details.provider}</p>
-        )}
-        {details.debug && (
-          <div className="bg-red-50 dark:bg-red-900/20 p-2 rounded space-y-1">
-            <p>Debug Info:</p>
-            <pre className="overflow-auto text-xs">
-              {JSON.stringify(details.debug, null, 2)}
-            </pre>
-          </div>
-        )}
-        {details.response && (
-          <div className="bg-red-50 dark:bg-red-900/20 p-2 rounded space-y-1">
-            <p>Response Details:</p>
-            <pre className="overflow-auto text-xs">
-              {JSON.stringify(details.response, null, 2)}
-            </pre>
-          </div>
-        )}
-      </div>
-    )}
-    <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 space-y-2">
-      <p>To fix this:</p>
-      <ol className="list-decimal list-inside space-y-1">
-        <li>Get your API key from{' '}
-          <a 
-            href="https://openrouter.ai/keys" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="underline hover:text-blue-500"
-          >
-            https://openrouter.ai/keys
-          </a>
-        </li>
-        <li>Add this line to your .env file: OPENROUTER_API_KEY=your_key_here</li>
-        <li>Make sure there are no spaces or quotes around the API key</li>
-        <li>Restart your Next.js server</li>
-      </ol>
-    </div>
-  </div>
-);
-
-const ProcessingMessage = () => (
-  <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
-    <FaSpinner className="animate-spin h-4 w-4" />
-    <span>Processing document...</span>
-  </div>
-);
 
 const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsLoading }) => {
   const [inputMessage, setInputMessage] = useState('');
@@ -519,162 +472,8 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
     >
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-5xl mx-auto px-5 space-y-6">
-          {messages.length === 0 && !isLoading && (
-            <div className="text-center text-gray-500 dark:text-gray-300 mt-72 md:mt-60 mb-8 px-5   select-none">
-              <h2 className="text-2xl md:text-3xl font-semibold mb-2">Welcome to Streamly!</h2>
-              <p className="text-base">Start a conversation or ask for a Movie & Drama suggestion based on your mood or story.</p>
-              <div className="flex flex-wrap justify-center gap-3 mt-4">
-                {[
-                  { label: 'Happy', color: 'bg-yellow-200 text-yellow-800 dark:bg-yellow-400 dark:text-yellow-900' },
-                  { label: 'Sad', color: 'bg-blue-200 text-blue-800 dark:bg-blue-400 dark:text-blue-900' },
-                  { label: 'Romantic', color: 'bg-pink-200 text-pink-800 dark:bg-pink-400 dark:text-pink-900' },
-                  { label: 'Suspense', color: 'bg-purple-200 text-purple-800 dark:bg-purple-400 dark:text-purple-900' },
-                  { label: 'Nostalgic', color: 'bg-orange-200 text-orange-800 dark:bg-orange-400 dark:text-orange-900' },
-                  { label: 'Lonely', color: 'bg-gray-300 text-gray-800 dark:bg-gray-500 dark:text-gray-900' },
-                  { label: 'Adventure', color: 'bg-green-200 text-green-800 dark:bg-green-400 dark:text-green-900' },
-                  { label: 'Comedy', color: 'bg-lime-200 text-lime-800 dark:bg-lime-400 dark:text-lime-900' },
-                  { label: 'Thriller', color: 'bg-red-200 text-red-800 dark:bg-red-400 dark:text-red-900' },
-                  { label: 'Family', color: 'bg-teal-200 text-teal-800 dark:bg-teal-400 dark:text-teal-900' },
-                ].map((kw) => (
-                  <span key={kw.label} className={`${kw.color} px-3 py-1 rounded-full text-xs font-medium select-none`}>
-                    {kw.label}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-          {messages.map((message, index) => (
-            <div key={index} className="space-y-4 mt-4">
-              <div className={`flex items-start ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[90%] ${
-                  message.role === 'user' 
-                    ? 'bg-gray-600 text-white rounded-lg px-4 py-2 shadow-sm' 
-                    : 'text-gray-800 dark:text-gray-200'
-                }`}>
-                  {message.role === 'user' ? (
-                    <p className="text-white whitespace-pre-wrap">{message.content}</p>
-                  ) : (
-                    <>
-                      {/* Render images if present in the assistant message */}
-                      {Array.isArray(message.images) && message.images.length > 0 && (
-                        <div className="mb-3 grid grid-cols-2 md:grid-cols-3 gap-3">
-                          {message.images.map((img, i) => (
-                            <img
-                              key={img.url || img.src || i}
-                              src={img.url || img.src}
-                              alt={img.alt || `Result image ${i+1}`}
-                              className="rounded-lg object-cover max-h-48 w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
-                              loading="lazy"
-                            />
-                          ))}
-                        </div>
-                      )}
-                      <div className="prose prose-sm dark:prose-invert max-w-none">
-                        <ReactMarkdown
-                          remarkPlugins={[remarkGfm]}
-                          rehypePlugins={[rehypeRaw, rehypeHighlight]}
-                          components={{
-                            code({node, inline, className, children, ...props}) {
-                              const match = /language-(\w+)/.exec(className || '');
-                              return inline ? (
-                                <code className="bg-gray-200 dark:bg-gray-800 rounded px-1 py-0.5" {...props}>
-                                  {children}
-                                </code>
-                              ) : (
-                                <div className="not-prose my-4">
-                                  <div className="relative group bg-gray-800 dark:bg-gray-900 rounded-md">
-                                    <code className={`${className || ''} block p-4 overflow-x-auto`} {...props}>
-                                      {children}
-                                    </code>
-                                    <button 
-                                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-700 dark:bg-gray-800 text-gray-300 hover:text-white rounded px-2 py-1 text-xs"
-                                      onClick={() => navigator.clipboard.writeText(String(children))}
-                                    >
-                                      Copy
-                                    </button>
-                                  </div>
-                                </div>
-                              );
-                            },
-                            p({children}) {
-                              const hasElement = React.Children.toArray(children).some(
-                                child => React.isValidElement(child)
-                              );
-                              if (hasElement) {
-                                return <>{children}</>;
-                              }
-                              return <p className="mb-4 last:mb-0">{children}</p>;
-                            },
-                            ul({children}) {
-                              return <ul className="list-disc list-inside mb-4 space-y-2">{children}</ul>;
-                            },
-                            ol({children}) {
-                              return <ol className="list-decimal list-inside mb-4 space-y-2">{children}</ol>;
-                            },
-                            li({children}) {
-                              return <li className="ml-4">{children}</li>;
-                            },
-                            a: ({href, children}) => {
-                              if (message.role === 'assistant') {
-                                const isOpen = openIframes[index] === href;
-                                return (
-                                  <>
-                                    <button
-                                      className={`text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 underline focus:outline-none`}
-                                      style={{wordBreak: 'break-all'}}
-                                      onClick={e => {
-                                        e.preventDefault();
-                                        setOpenIframes(prev => ({
-                                          ...prev,
-                                          [index]: isOpen ? null : href
-                                        }));
-                                      }}
-                                    >
-                                      {children}
-                                    </button>
-                                    {isOpen && (
-                                      <div className="mt-3 mb-2 rounded border border-gray-300 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-900">
-                                        <iframe
-                                          src={href}
-                                          title="Web Preview"
-                                          className="w-[90vw] lg:max-w-[80vw] max-w-3xl min-h-[700px] max-h-[1200px] lg:min-h-[600px] lg:max-h-[800px]"
-                                          sandbox="allow-scripts allow-same-origin allow-popups"
-                                          onError={e => {
-                                            e.target.style.display = 'none';
-                                            e.target.parentNode.append('Embedding not allowed by this site.');
-                                          }}
-                                        />
-                                        <div className="text-xs text-gray-500 dark:text-gray-400 px-3 py-1">If the site does not load, it may not allow embedding.</div>
-                                      </div>
-                                    )}
-                                  </>
-                                );
-                              }
-                              return <a href={href} className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300" target="_blank" rel="noopener noreferrer">{children}</a>;
-                            },
-                            blockquote({children}) {
-                              return <blockquote className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 my-4 italic">{children}</blockquote>;
-                            },
-                            table({children}) {
-                              return <div className="overflow-x-auto my-4"><table className="min-w-full divide-y divide-gray-300 dark:divide-gray-600">{children}</table></div>;
-                            },
-                            th({children}) {
-                              return <th className="px-4 py-2 bg-gray-200 dark:bg-gray-800">{children}</th>;
-                            },
-                            td({children}) {
-                              return <td className="px-4 py-2 border-t border-gray-300 dark:border-gray-600">{children}</td>;
-                            }
-                          }}
-                        >
-                          {message.content}
-                        </ReactMarkdown>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
+          {messages.length === 0 && !isLoading && <WelcomeMessage />}
+          <ChatMessagesList messages={messages} openIframes={openIframes} setOpenIframes={setOpenIframes} />
           {isLoading && (
             <div className="space-y-4">
               <div className="pl-0">
@@ -683,20 +482,10 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
                 ) : isProcessing ? (
                   <ProcessingMessage />
                 ) : (
-                  // Only show the global loading indicator if the last message is not an assistant message with content
                   (!messages.length ||
                     messages[messages.length - 1].role !== 'assistant' ||
                     !messages[messages.length - 1].content) && (
-                    <div className="font-mono text-sm text-gray-500 dark:text-gray-200 shadow-sm py-2">
-                      <div className="flex items-center space-x-2">
-                        <span>Thinking</span>
-                        <span className="inline-flex space-x-1">
-                          <span className="animate-bounce" style={{ animationDelay: '0ms' }}>.</span>
-                          <span className="animate-bounce" style={{ animationDelay: '100ms' }}>.</span>
-                          <span className="animate-bounce" style={{ animationDelay: '200ms' }}>.</span>
-                        </span>
-                      </div>
-                    </div>
+                    <LoadingIndicator />
                   )
                 )}
               </div>
@@ -705,203 +494,41 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
           <div ref={messagesEndRef} className="h-4" />
         </div>
       </div>
-      
       {/* Input area */}
-      <div className="">
-        <div className="relative max-w-5xl mx-auto">
-          <div className="relative">
-            <form onSubmit={handleSubmit} className="px-4">
-              <div className="relative rounded-xl border border-gray-200 dark:border-gray-700 shadow-inner bg-white dark:bg-gray-600">
-                {selectedFile && (
-                  <div className="px-3 pt-2">
-                    <div className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-600">
-                      <AiFillFilePdf className="h-4 w-4 text-red-500 mr-2" />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">{selectedFile.name}</span>
-                      <button
-                        type="button"
-                        className="ml-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                        onClick={() => {
-                          setSelectedFile(null);
-                          if (fileInputRef.current) {
-                            fileInputRef.current.fileToProcess = null;
-                          }
-                        }}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  </div>
-                )}
-                <textarea
-                  className={`w-full px-3 ${selectedFile ? 'pt-2' : 'pt-5'} pb-3 pr-8 bg-transparent text-gray-800 dark:text-gray-200 resize-none focus:outline-none pl-5`}
-                  rows="1"
-                  placeholder="Ask anything..."
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSubmit(e);
-                    }
-                  }}
-                  disabled={false}
-                ></textarea>
-                <button 
-                  type={isLoading ? "button" : "submit"}
-                  className="absolute right-2 top-2.5 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors disabled:opacity-40 hover:bg-gray-100 dark:hover:bg-gray-600 rounded touch-manipulation"
-                  disabled={!inputMessage.trim() && !isLoading && !selectedFile}
-                  onClick={isLoading ? (e) => { e.preventDefault(); stopGenerating(); } : undefined}
-                >
-                  {isLoading ? (
-                    <GrStatusPlaceholder className="h-7 w-7 text-gray-400 dark:text-gray-100 border border-gray-600 dark:border-gray-100 rounded-md bg-gray-300" />
-                  ) : (
-                    <BsFillArrowUpCircleFill className="h-8 w-8 text-gray-400 dark:text-gray-100" />
-                  )}
-                </button>
-                <div className="px-3 py-2">
-                  <div className="flex items-center space-x-1">
-                    {/* File upload button with dropdown */}
-                    <div className="relative group">
-                      <button
-                        type="button"
-                        className="p-1 transition-colors rounded-md"
-                        onClick={() => setShowFileDropdown(!showFileDropdown)}
-                        disabled={isLoading}
-                      >
-                        <MdOutlineAttachFile className="h-7 w-7 text-gray-400 dark:text-gray-200" />
-                      </button>
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                        Attach file
-                      </div>
-                      
-                      {/* File type dropdown */}
-                      {showFileDropdown && (
-                        <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1 min-w-[120px]">
-                          <button
-                            className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
-                            onClick={() => handleFileTypeSelect()}
-                          >
-                            <AiFillFilePdf className="h-4 w-4" />
-                            <span>PDF</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Image upload button */}
-                    <div className="relative group">
-                      <button
-                        type="button"
-                        className="p-1 transition-colors rounded-md"
-                        onClick={() => {/* TODO: Implement image upload */}}
-                        disabled={isLoading}
-                      >
-                        <RiImageAddFill className="h-7 w-7 text-gray-400 dark:text-gray-200" />
-                      </button>
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                        Upload image
-                      </div>
-                    </div>
-
-                    {/* Web search button */}
-                    <div className="relative group">
-                      <button
-                        type="button"
-                        className={`p-1 transition-colors rounded-md
-                          ${webSearchMode ? '' : ''}
-                          ${!isLoading ? 'hover:bg-gray-400' : ''}
-                        `}
-                        onClick={() => setWebSearchMode(v => !v)}
-                        disabled={isLoading}
-                        style={{
-                          background: 'transparent',
-                        }}
-                      >
-                        <IoGlobeOutline
-                          className={`h-7 w-7
-                            ${webSearchMode
-                              ? 'text-gray-700 dark:text-white'
-                              : 'text-gray-100 dark:text-gray-800'}
-                          `}
-                        />
-                      </button>
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                        Search the web
-                      </div>
-                    </div>
-
-                    {/* AI Summarize button */}
-                    <div className="relative group">
-                      <button
-                        type="button"
-                        className={`p-1 transition-colors rounded-md
-                          ${aiSummarizeMode ? '' : ''}
-                          ${!isLoading ? 'hover:bg-yellow-300' : ''}
-                        `}
-                        onClick={() => setAiSummarizeMode(v => !v)}
-                        disabled={isLoading}
-                        style={{
-                          background: 'transparent',
-                        }}
-                      >
-                        <MdOutlineLightbulb
-                          className={`h-7 w-7
-                            ${aiSummarizeMode
-                              ? 'text-yellow-500 dark:text-yellow-300'
-                              : 'text-gray-200 dark:text-gray-700'}
-                          `}
-                        />
-                      </button>
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                        AI Summarize
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-
+      <ChatInputArea
+        inputMessage={inputMessage}
+        setInputMessage={setInputMessage}
+        handleSubmit={handleSubmit}
+        isLoading={isLoading}
+        stopGenerating={stopGenerating}
+        selectedFile={selectedFile}
+        setSelectedFile={setSelectedFile}
+        fileInputRef={fileInputRef}
+        showFileDropdown={showFileDropdown}
+        setShowFileDropdown={setShowFileDropdown}
+        handleFileTypeSelect={handleFileTypeSelect}
+        showFileModal={showFileModal}
+        setShowFileModal={setShowFileModal}
+        webSearchMode={webSearchMode}
+        setWebSearchMode={setWebSearchMode}
+        aiSummarizeMode={aiSummarizeMode}
+        setAiSummarizeMode={setAiSummarizeMode}
+      />
       {/* File upload modal */}
-      {showFileModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
-              Select PDF File
-            </h3>
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              accept=".pdf"
-              onChange={(e) => handleFileSelect(e.target.files[0])}
-            />
-            <div className="flex justify-end space-x-3">
-              <button
-                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
-                onClick={() => {
-                  setShowFileModal(false);
-                  setSelectedFile(null);
-                  if (fileInputRef.current) {
-                    fileInputRef.current.value = '';
-                    fileInputRef.current.fileToProcess = null;
-                  }
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-4 py-2 text-sm bg-gray-500 text-white rounded hover:bg-gray-600"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                Browse
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <FileUploadModal
+        show={showFileModal}
+        onClose={() => {
+          setShowFileModal(false);
+          setSelectedFile(null);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+            fileInputRef.current.fileToProcess = null;
+          }
+        }}
+        onFileSelect={handleFileSelect}
+        fileInputRef={fileInputRef}
+        selectedFile={selectedFile}
+      />
     </div>
   );
 };

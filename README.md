@@ -1,6 +1,6 @@
-# Streamly - AI Movie & Drama Suggestion Assistant
+# Glimora - AI Movie & Drama Suggestion Assistant
 
-Streamly is a modern PWA (Progressive Web App) AI assistant that helps you discover and get personalized recommendations for movies and dramas based on your mood or story. Powered by advanced AI, Streamly analyzes your input and suggests the best titles to watch next.
+Glimora is a modern PWA (Progressive Web App) AI assistant that helps you discover and get personalized recommendations for movies and dramas based on your mood or story. Powered by advanced AI, Glimora analyzes your input and suggests the best titles to watch next.
 
 - **PWA support**: Installable on mobile and desktop, with offline capabilities.
 - **Open Graph & Twitter Card**: Social sharing with a rich preview image (`app/opengraph-image.jpg`).
@@ -8,7 +8,7 @@ Streamly is a modern PWA (Progressive Web App) AI assistant that helps you disco
 
 ---
 
-# Streamly - Modern AI Chat Application
+# Glimora - Modern AI Chat Application
 
 A modern ChatGPT-like web application built with Next.js 13+ (App Router) and TailwindCSS.
 
@@ -35,8 +35,8 @@ A modern ChatGPT-like web application built with Next.js 13+ (App Router) and Ta
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/streamly.git
-cd streamly
+git clone https://github.com/yourusername/glimora.git
+cd glimora
 ```
 
 2. Install dependencies:
@@ -70,7 +70,7 @@ npm run dev
 ## Project Structure
 
 ```
-streamly/
+glimora/
 ├── app/
 │   ├── components/
 │   │   ├── Header.js
@@ -117,7 +117,7 @@ streamly/
 - Only for AI processing and PDF extraction. Your chat history is stored locally in your browser.
 
 **Q: Can I use this app on mobile?**
-- Yes! Streamly is a PWA and works great on mobile devices.
+- Yes! Glimora is a PWA and works great on mobile devices.
 
 **Q: Why do I sometimes get weird or repeated responses from the AI?**
 - This is a limitation of the AI model. Try rephrasing your question or sending it again.

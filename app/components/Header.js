@@ -16,7 +16,7 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
             </button>
           )}
           <Link href="/" className="flex items-center">
-            <span className="text-2xl font-bold text-gray-800 dark:text-white">Streamly</span>
+            <span className="text-2xl font-bold text-gray-800 dark:text-white">Glimora</span>
           </Link>
         </div>
         <div className="flex items-center space-x-4">
