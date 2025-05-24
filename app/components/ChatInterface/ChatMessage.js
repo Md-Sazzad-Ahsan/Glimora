@@ -5,7 +5,7 @@ import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import Image from 'next/image';
 
-const ChatMessage = ({ message, index, openIframes, setOpenIframes }) => {
+const ChatMessage = ({ message, index }) => {
   return (
     <div className="space-y-4 mt-4">
       <div className={`flex items-start ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -78,44 +78,14 @@ const ChatMessage = ({ message, index, openIframes, setOpenIframes }) => {
                       return <ol className="list-decimal list-inside mb-4 space-y-2">{children}</ol>;
                     },
                     li({children}) {
-                      return <li className="ml-4">{children}</li>;
+                      return <li className="ml-4 block">{children}</li>;
                     },
                     a: ({href, children}) => {
                       if (message.role === 'assistant') {
-                        const isOpen = openIframes[index] === href;
-                        return (
-                          <>
-                            <button
-                              className={`text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 underline focus:outline-none`}
-                              style={{wordBreak: 'break-all'}}
-                              onClick={e => {
-                                e.preventDefault();
-                                setOpenIframes(prev => ({
-                                  ...prev,
-                                  [index]: isOpen ? null : href
-                                }));
-                              }}
-                            >
-                              {children}
-                            </button>
-                            {isOpen && (
-                              <div className="mt-3 mb-2 rounded border border-gray-300 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-900">
-                                <iframe
-                                  src={href}
-                                  title="Web Preview"
-                                  className="w-[90vw] lg:max-w-[80vw] max-w-3xl min-h-[700px] max-h-[1200px] lg:min-h-[600px] lg:max-h-[800px]"
-                                  sandbox="allow-scripts allow-same-origin allow-popups"
-                                  onError={e => {
-                                    e.target.style.display = 'none';
-                                    e.target.parentNode.append('Embedding not allowed by this site.');
-                                  }}
-                                />
-                                <div className="text-xs text-gray-500 dark:text-gray-400 px-3 py-1">If the site does not load, it may not allow embedding.</div>
-                              </div>
-                            )}
-                          </>
-                        );
+                        // For assistant messages, render links as plain text, not clickable.
+                        return <>{children}</>; 
                       }
+                      // For user messages, render links as clickable.
                       return <a href={href} className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300" target="_blank" rel="noopener noreferrer">{children}</a>;
                     },
                     blockquote({children}) {

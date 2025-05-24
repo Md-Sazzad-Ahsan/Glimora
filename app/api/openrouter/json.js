@@ -41,9 +41,9 @@ If you can't find any of these fields, ask for clarification. Do not add any exp
         { role: "system", content: systemPrompt },
         ...messages
       ],
-      temperature: 0.7,
+      temperature: 0.5,
       stream: false,
-      max_tokens: 1000,
+      max_tokens: 500,
     });
 
     // The AI's response should be a JSON string

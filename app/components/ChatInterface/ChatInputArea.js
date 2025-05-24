@@ -29,7 +29,7 @@ const ChatInputArea = ({
     <div className="relative max-w-5xl mx-auto">
       <div className="relative">
         <form onSubmit={handleSubmit} className="px-4">
-          <div className="relative rounded-xl border border-gray-200 dark:border-gray-700 shadow-inner bg-white dark:bg-gray-600">
+          <div className="relative rounded-xl border border-orange-300 dark:border-orange-300 shadow-inner bg-white dark:bg-gray-600">
             {selectedFile && (
               <div className="px-3 pt-2">
                 <div className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-600">

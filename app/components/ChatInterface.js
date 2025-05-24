@@ -35,14 +35,14 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
   const [errorDetails, setErrorDetails] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [webSearchMode, setWebSearchMode] = useState(false);
-  const [aiSummarizeMode, setAiSummarizeMode] = useState(false);
+  const [aiSummarizeMode, setAiSummarizeMode] = useState(true);
   const messagesEndRef = useRef(null);
   const abortControllerRef = useRef(null);
   const [showFileDropdown, setShowFileDropdown] = useState(false);
   const [showFileModal, setShowFileModal] = useState(false);
   const fileInputRef = useRef(null);
   const sendingRef = useRef(false);
-  const [openIframes, setOpenIframes] = useState({});
+  const shouldContinueRef = useRef(true);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -75,13 +75,30 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
   };
 
   const stopGenerating = () => {
+    // Set the flag to stop streaming
+    shouldContinueRef.current = false;
+    
+    // Abort any ongoing fetch requests
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
-      setIsLoading(false);
-      setError(null);
-      setErrorDetails(null);
     }
+    
+    // Reset all loading and processing states
+    setIsLoading(false);
+    setIsProcessing(false);
+    setError(null);
+    setErrorDetails(null);
+    
+    // Clear any file processing state
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.fileToProcess = null;
+    }
+    setSelectedFile(null);
+    
+    // Do NOT remove the last assistant message anymore
+    // The content that was already streamed will be preserved
   };
 
   // Function to extract text from document
@@ -131,12 +148,18 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
   const streamAssistantMessage = async (baseMessages, text, delay = 30) => {
     let words = text.split(/(\s+)/);
     let accumulated = '';
+    shouldContinueRef.current = true;  // Reset the flag at the start of streaming
+    
     for (let i = 0; i < words.length; i++) {
+      if (!shouldContinueRef.current) {
+        return false;  // Return false to indicate streaming was cancelled
+      }
       accumulated += words[i];
       updateLastAssistantMessage(baseMessages, accumulated);
       // eslint-disable-next-line no-await-in-loop
       await new Promise(res => setTimeout(res, delay));
     }
+    return true;  // Return true to indicate streaming completed
   };
 
   // Modified handleSubmit to handle file processing and web search mode
@@ -144,6 +167,8 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
     if (e) e.preventDefault();
     if ((!inputMessage.trim() && !customMessage && !selectedFile) || isLoading) return;
 
+    shouldContinueRef.current = true;  // Reset the flag at the start of submission
+    
     // Always construct userMessage from input or customMessage
     const userMessage = customMessage || { role: 'user', content: inputMessage };
     const baseMessages = [...messages, userMessage];
@@ -163,6 +188,7 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
         // Extract text from the document
         const text = await extractTextFromDocument(fileToProcess);
         // Send the extracted text to the API
+        abortControllerRef.current = new AbortController();
         const response = await fetch('/api/openrouter', {
           method: 'POST',
           headers: {
@@ -177,6 +203,7 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
               }
             ],
           }),
+          signal: abortControllerRef.current.signal,
         });
         if (!response.ok) {
           const errorData = await response.json();
@@ -189,13 +216,20 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
         const decoder = new TextDecoder();
         let accumulatedContent = '';
         while (true) {
+          if (!shouldContinueRef.current) break;
           const { done, value } = await reader.read();
           if (done) break;
           const text = decoder.decode(value);
           accumulatedContent += text;
-          updateLastAssistantMessage(baseMessages, accumulatedContent);
+          if (shouldContinueRef.current) {
+            updateLastAssistantMessage(baseMessages, accumulatedContent);
+          }
         }
       } catch (error) {
+        if (error.name === 'AbortError') {
+          // Do nothing for aborted requests
+          return;
+        }
         updateLastAssistantMessage(baseMessages, 'Failed to process file content');
         setError('Failed to process file content');
         setErrorDetails(error.cause);
@@ -217,10 +251,12 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
       await streamAssistantMessage(baseMessages, 'Searching...', 60);
       let webResults = null;
       try {
+        abortControllerRef.current = new AbortController();
         const response = await fetch('/api/web-search', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query: userMessage.content }),
+          signal: abortControllerRef.current.signal,
         });
         const data = await response.json();
         console.log('Web search API response:', data);
@@ -261,13 +297,20 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
               const decoder = new TextDecoder();
               let accumulatedContent = '';
               while (true) {
+                if (!shouldContinueRef.current) break;
                 const { done, value } = await reader.read();
                 if (done) break;
                 const text = decoder.decode(value);
                 accumulatedContent += text;
-                updateLastAssistantMessage(baseMessages, accumulatedContent);
+                if (shouldContinueRef.current) {
+                  updateLastAssistantMessage(baseMessages, accumulatedContent);
+                }
               }
             } catch (error) {
+              if (error.name === 'AbortError') {
+                // Do nothing for aborted requests
+                return;
+              }
               updateLastAssistantMessage(baseMessages, 'AI summarization failed. Please try again.');
             } finally {
               setIsLoading(false);
@@ -275,21 +318,28 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
             }
             return;
           } else {
-            // Normal web search result (no AI summarize)
+            // Normal web search result (no AI summarize) - REVERTED
             let content = '';
             if (data.answer && data.answer.trim()) {
               content += `${data.answer.trim()}`;
             }
+
             if (data.results && data.results.length > 0) {
-              const sources = data.results.slice(0, 3).map(r => `- [${r.title}](${r.url})`).join('\n');
+              const sources = data.results.slice(0, 5).map(r => `- [${r.title}](${r.url})`).join('\n');
               if (sources) {
-                content += `\n\n**Sources:**\n${sources}`;
+                // Ensure there's a separation if an answer already exists.
+                if (content) {
+                  content += '\n\n'; 
+                }
+                content += `**Sources:**\n${sources}`;
               }
             }
-            if (!content) {
+
+            if (!content.trim()) { 
               content = 'No direct answer or sources found, but here is what we found from the web.';
             }
-            await streamAssistantMessage(baseMessages, content, 30);
+            
+            await streamAssistantMessage(baseMessages, content.trim(), 30);
             setIsLoading(false);
             return;
           }
@@ -320,13 +370,20 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
           const decoder = new TextDecoder();
           let accumulatedContent = '';
           while (true) {
+            if (!shouldContinueRef.current) break;
             const { done, value } = await reader.read();
             if (done) break;
             const text = decoder.decode(value);
             accumulatedContent += text;
-            updateLastAssistantMessage(baseMessages, accumulatedContent);
+            if (shouldContinueRef.current) {
+              updateLastAssistantMessage(baseMessages, accumulatedContent);
+            }
           }
         } catch (error) {
+          if (error.name === 'AbortError') {
+            // Do nothing for aborted requests
+            return;
+          }
           updateLastAssistantMessage(baseMessages, 'AI response failed. Please try again.');
         } finally {
           setIsLoading(false);
@@ -367,13 +424,20 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
         const decoder = new TextDecoder();
         let accumulatedContent = '';
         while (true) {
+          if (!shouldContinueRef.current) break;
           const { done, value } = await reader.read();
           if (done) break;
           const text = decoder.decode(value);
           accumulatedContent += text;
-          updateLastAssistantMessage(baseMessages, accumulatedContent);
+          if (shouldContinueRef.current) {
+            updateLastAssistantMessage(baseMessages, accumulatedContent);
+          }
         }
       } catch (error) {
+        if (error.name === 'AbortError') {
+          // Do nothing for aborted requests
+          return;
+        }
         if (error.name !== 'AbortError') {
           updateLastAssistantMessage(baseMessages, error.message || 'AI response failed. Please try again.');
           setError(error.message);
@@ -403,10 +467,12 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
 
     let webResults = null;
     try {
+      abortControllerRef.current = new AbortController();
       const response = await fetch('/api/web-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: userQuery }),
+        signal: abortControllerRef.current.signal,
       });
       const data = await response.json();
       if (data.results && data.results.length > 0) {
@@ -446,6 +512,7 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
       const decoder = new TextDecoder();
       let accumulatedContent = '';
       while (true) {
+        if (!shouldContinueRef.current) break;
         const { done, value } = await reader.read();
         if (done) break;
         const text = decoder.decode(value);
@@ -457,6 +524,10 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
         setMessages(streamingMessages);
       }
     } catch (error) {
+      if (error.name === 'AbortError') {
+        // Do nothing for aborted requests
+        return;
+      }
       setMessages([...baseMessages, { role: 'assistant', content: 'AI response failed. Please try again.' }]);
     } finally {
       setIsLoading(false);
@@ -473,7 +544,7 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-5xl mx-auto px-5 space-y-6">
           {messages.length === 0 && !isLoading && <WelcomeMessage />}
-          <ChatMessagesList messages={messages} openIframes={openIframes} setOpenIframes={setOpenIframes} />
+          <ChatMessagesList messages={messages} />
           {isLoading && (
             <div className="space-y-4">
               <div className="pl-0">

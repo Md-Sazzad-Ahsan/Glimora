@@ -20,8 +20,8 @@ export async function POST(req) {
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        query: `Find the latest movie or drama information, reviews, and news about: ${query}`,
-        search_depth: 'basic',
+        query: `You are a movie and drama expert. Now Find the latest movie or drama, reviews, Actor, Actress, Director, and news minimum 5 to 10 lines about: ${query}`,
+        search_depth: 'advanced',
         include_answer: true,
         include_raw_content: false,
         max_results: 5,
@@ -39,8 +39,8 @@ export async function POST(req) {
     // Format results
     let results = [];
     if (Array.isArray(data.results)) {
-      results = data.results.slice(0, 5).map(r => ({
-        title: r.title || r.url,
+      results = data.results.map(r => ({
+        title: r.title,
         snippet: r.snippet || '',
         url: r.url,
       }));
