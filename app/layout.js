@@ -1,7 +1,9 @@
+import { SessionProvider } from 'next-auth/react';
 import './globals.css';
 
+
 export const metadata = {
-  title: 'Glimora - AI Chat Assistant',
+  title: 'Glimora -  Assistant',
   description: 'A modern ChatGPT-like web application built with Next.js',
 };
 
@@ -28,7 +30,9 @@ export default function RootLayout({ children }) {
         <meta name="twitter:image" content="/opengraph-image.jpg" />
       </head>
       <body className="min-h-screen bg-gray-50 dark:bg-gray-900 antialiased">
-        {children}
+        <SessionProvider>
+          {children}
+        </SessionProvider>
       </body>
     </html>
   );
