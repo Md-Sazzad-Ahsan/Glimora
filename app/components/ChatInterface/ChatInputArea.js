@@ -1,5 +1,5 @@
 import React from 'react';
-import { BsFillArrowUpCircleFill } from "react-icons/bs";
+import { BsFillArrowUpRightCircleFill } from "react-icons/bs";
 import { GrStatusPlaceholder } from "react-icons/gr";
 import { MdOutlineAttachFile, MdOutlineLightbulb } from "react-icons/md";
 import { RiImageAddFill } from "react-icons/ri";
@@ -29,7 +29,7 @@ const ChatInputArea = ({
     <div className="relative max-w-5xl mx-auto">
       <div className="relative">
         <form onSubmit={handleSubmit} className="px-4">
-          <div className="relative rounded-xl border border-orange-300 dark:border-orange-300 shadow-inner bg-white dark:bg-gray-600">
+          <div className="relative rounded-xl border border-orange-300 dark:border-orange-300 shadow-inner bg-white dark:bg-gray-700">
             {selectedFile && (
               <div className="px-3 pt-2">
                 <div className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-600">
@@ -66,14 +66,14 @@ const ChatInputArea = ({
             ></textarea>
             <button 
               type={isLoading ? "button" : "submit"}
-              className="absolute right-2 top-2.5 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors disabled:opacity-40 hover:bg-gray-100 dark:hover:bg-gray-600 rounded touch-manipulation"
+              className="absolute right-2 bottom-2.5 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors disabled:opacity-40 hover:bg-gray-100 dark:hover:bg-gray-600 rounded touch-manipulation"
               disabled={!inputMessage.trim() && !isLoading && !selectedFile}
               onClick={isLoading ? (e) => { e.preventDefault(); stopGenerating(); } : undefined}
             >
               {isLoading ? (
                 <GrStatusPlaceholder className="h-7 w-7 text-gray-400 dark:text-gray-100 border border-gray-600 dark:border-gray-100 rounded-md bg-gray-300" />
               ) : (
-                <BsFillArrowUpCircleFill className="h-8 w-8 text-gray-400 dark:text-gray-100" />
+                <BsFillArrowUpRightCircleFill className="h-8 w-8 text-gray-400 dark:text-gray-100" />
               )}
             </button>
             <div className="px-3 py-2">

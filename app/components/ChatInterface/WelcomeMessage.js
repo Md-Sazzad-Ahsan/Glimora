@@ -1,7 +1,7 @@
 import React from 'react';
 
 const WelcomeMessage = () => (
-  <div className="text-center mt-40 mb-8 px-5 select-none">
+  <div className="text-center mt-[50%] md:mt-52 px-5 select-none">
     <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-gray-700 dark:text-gray-300">
       Discover Your Next Favorite Movie with
        <span className=" animate-gradient bg-gradient-to-r from-orange-600 via-orange-400 to-orange-600 dark:from-orange-400 dark:via-orange-300 dark:to-orange-400 bg-[length:200%_auto] bg-clip-text text-transparent">  GLIMORA!</span>
