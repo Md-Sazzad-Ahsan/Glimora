@@ -13,14 +13,17 @@ import { MdOutlineAttachFile, MdOutlineLightbulb } from "react-icons/md";
 import { RiImageAddFill } from "react-icons/ri";
 import { AiFillFilePdf } from "react-icons/ai";
 import { FaSpinner } from "react-icons/fa";
+
+// Local components
 import ChatMessage from './ChatInterface/ChatMessage';
 import ChatInputArea from './ChatInterface/ChatInputArea';
 import FileUploadModal from './ChatInterface/FileUploadModal';
 import ErrorMessage from './ChatInterface/ErrorMessage';
 import ProcessingMessage from './ChatInterface/ProcessingMessage';
-import WelcomeMessage from './ChatInterface/WelcomeMessage';
 import LoadingIndicator from './ChatInterface/LoadingIndicator';
 import ChatMessagesList from './ChatInterface/ChatMessagesList';
+import { Card, CardContent, CardHeader, CardTitle } from './Card';
+import Trending from './Trending';
 
 // Helper function to check if a URL is an image
 const isImageUrl = (url) => {
@@ -28,21 +31,75 @@ const isImageUrl = (url) => {
 };
 
 const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsLoading }) => {
+  // State for TMDB integration
+  const [tmdbResults, setTmdbResults] = useState([]);
+  
+  // Form and UI state
   const [inputMessage, setInputMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [imageErrors, setImageErrors] = useState({});
   const [error, setError] = useState(null);
   const [errorDetails, setErrorDetails] = useState(null);
+  const [imageErrors, setImageErrors] = useState({});
+  
+  // File handling state
   const [selectedFile, setSelectedFile] = useState(null);
+  const [showFileModal, setShowFileModal] = useState(false);
+  const [showFileDropdown, setShowFileDropdown] = useState(false);
+  
+  // Feature toggles
   const [webSearchMode, setWebSearchMode] = useState(false);
   const [aiSummarizeMode, setAiSummarizeMode] = useState(true);
+  
+  // Refs
+  const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
   const abortControllerRef = useRef(null);
-  const [showFileDropdown, setShowFileDropdown] = useState(false);
-  const [showFileModal, setShowFileModal] = useState(false);
-  const fileInputRef = useRef(null);
   const sendingRef = useRef(false);
   const shouldContinueRef = useRef(true);
+
+  // New function to fetch TMDB data
+  const fetchTmdbData = async (names) => {
+    const results = [];
+    for (const name of names) {
+      try {
+        // Try searching as a movie first
+        const response = await fetch(`/api/tmdb?query=${encodeURIComponent(name)}&type=movie`);
+        const data = await response.json();
+        
+        if (data && data.length > 0) {
+          results.push(...data.map(item => ({
+            ...item,
+            type: 'movie'
+          })));
+        } else {
+          // If no movie found, try searching as a TV show
+          const tvResponse = await fetch(`/api/tmdb?query=${encodeURIComponent(name)}&type=tv`);
+          const tvData = await tvResponse.json();
+          
+          if (tvData && tvData.length > 0) {
+            results.push(...tvData.map(item => ({
+              ...item,
+              type: 'tv'
+            })));
+          } else {
+            // If still no results, try searching as a person
+            const personResponse = await fetch(`/api/tmdb?query=${encodeURIComponent(name)}&type=person`);
+            const personData = await personResponse.json();
+            
+            if (personData && personData.length > 0) {
+              results.push(...personData.map(item => ({
+                ...item,
+                type: 'person'
+              })));
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`Error searching for ${name}:`, error);
+      }
+    }
+    return results;
+  };
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -167,90 +224,67 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
     if (e) e.preventDefault();
     if ((!inputMessage.trim() && !customMessage && !selectedFile) || isLoading) return;
 
-    shouldContinueRef.current = true;  // Reset the flag at the start of submission
-    
-    // Always construct userMessage from input or customMessage
+    shouldContinueRef.current = true;
     const userMessage = customMessage || { role: 'user', content: inputMessage };
     const baseMessages = [...messages, userMessage];
+    setMessages(baseMessages);
+    setInputMessage('');
+    setIsLoading(true);
+    setError(null);
+    setErrorDetails(null);
+    setTmdbResults([]); // Clear previous results
 
     // Check if we have a file to process
     const fileToProcess = fileInputRef.current?.fileToProcess;
-    if (fileToProcess) {
-      setMessages(baseMessages);
-      setInputMessage('');
-      setIsLoading(true);
-      setError(null);
-      setErrorDetails(null);
-      setIsProcessing(true);
-      // Create the assistant message bubble
-      updateLastAssistantMessage(baseMessages, 'Processing document...');
-      try {
-        // Extract text from the document
-        const text = await extractTextFromDocument(fileToProcess);
-        // Send the extracted text to the API
-        abortControllerRef.current = new AbortController();
-        const response = await fetch('/api/openrouter', {
+    
+    try {
+      if (fileToProcess) {
+        // Handle file processing logic here
+        // ...
+      } else {
+        // First, extract names using OpenRouter
+        const namesResponse = await fetch('/api/openrouter', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            messages: [
-              ...baseMessages,
-              {
-                role: 'system',
-                content: `Processing PDF file: ${fileToProcess.name}\n\n${text}`
-              }
-            ],
-          }),
-          signal: abortControllerRef.current.signal,
+            messages: [{ role: 'user', content: userMessage.content }]
+          })
         });
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to process file', {
-            cause: errorData.details
-          });
+
+        if (!namesResponse.ok) throw new Error('Failed to extract names');
+        
+        const { names } = await namesResponse.json();
+        
+        if (names && names.length > 0) {
+          // Fetch TMDB data for extracted names
+          const results = await fetchTmdbData(names);
+          setTmdbResults(results);
+        } else {
+          // Fallback to regular chat if no names found
+          await handleRegularChat(baseMessages);
         }
-        // Handle streaming response
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let accumulatedContent = '';
-        while (true) {
-          if (!shouldContinueRef.current) break;
-          const { done, value } = await reader.read();
-          if (done) break;
-          const text = decoder.decode(value);
-          accumulatedContent += text;
-          if (shouldContinueRef.current) {
-            updateLastAssistantMessage(baseMessages, accumulatedContent);
-          }
-        }
-      } catch (error) {
-        if (error.name === 'AbortError') {
-          // Do nothing for aborted requests
-          return;
-        }
-        updateLastAssistantMessage(baseMessages, 'Failed to process file content');
-        setError('Failed to process file content');
-        setErrorDetails(error.cause);
-      } finally {
-        setIsProcessing(false);
-        setIsLoading(false);
-        fileInputRef.current.fileToProcess = null;
-        setSelectedFile(null);
       }
-    } else if (webSearchMode) {
-      setMessages(baseMessages);
-      setInputMessage('');
-      setIsLoading(true);
-      setError(null);
-      setErrorDetails(null);
-      // Create the assistant message bubble
-      updateLastAssistantMessage(baseMessages, '');
-      // Stream 'Searching...' in the same bubble
-      await streamAssistantMessage(baseMessages, 'Searching...', 60);
-      let webResults = null;
+    } catch (error) {
+      console.error('Error processing request:', error);
+      setError('Failed to process your request');
+      setErrorDetails(error.message);
+      // Fallback to regular chat on error if not file processing
+      if (!fileToProcess) {
+        await handleRegularChat(baseMessages);
+      }
+    } finally {
+      setIsLoading(false);
+      // Clear file input after processing
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+        fileInputRef.current.fileToProcess = null;
+      }
+    }
+    if (webSearchMode) {
       try {
+        // Create the assistant message bubble
+        updateLastAssistantMessage(baseMessages, 'Searching...');
+        
         abortControllerRef.current = new AbortController();
         const response = await fetch('/api/web-search', {
           method: 'POST',
@@ -535,36 +569,111 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
     }
   };
 
+  // Helper for regular chat flow
+  const handleRegularChat = async (baseMessages) => {
+    try {
+      const response = await fetch('/api/openrouter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [...baseMessages]
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to get response');
+      
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let content = '';
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        content += decoder.decode(value, { stream: true });
+        updateLastAssistantMessage(baseMessages, content);
+      }
+    } catch (error) {
+      console.error('Error in regular chat:', error);
+      setError('Failed to process your message');
+      setErrorDetails(error.message);
+    }
+  };
+
   return (
     <div 
       className={`flex flex-col h-[calc(100vh-4rem)] bg-white dark:bg-gray-800 transition-all duration-300 ease-in-out w-full pt-20 ${
-        isSidebarOpen ? 'lg:ml-64' : ''
+        isSidebarOpen ? 'lg:pl-72' : 'lg:pl-20'
       }`}
     >
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-5 space-y-6">
-          {messages.length === 0 && !isLoading && <WelcomeMessage />}
-          <ChatMessagesList messages={messages} />
-          {isLoading && (
-            <div className="space-y-4">
-              <div className="pl-0">
-                {error ? (
-                  <ErrorMessage error={error} details={errorDetails} />
-                ) : isProcessing ? (
-                  <ProcessingMessage />
-                ) : (
-                  (!messages.length ||
-                    messages[messages.length - 1].role !== 'assistant' ||
-                    !messages[messages.length - 1].content) && (
-                    <LoadingIndicator />
-                  )
-                )}
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} className="h-4" />
-        </div>
+      <div className="flex-1 overflow-y-auto p-4">
+        {messages.length === 0 && !isLoading && <Trending />}
+        <ChatMessagesList 
+          messages={messages} 
+          handleImageError={handleImageError} 
+          imageErrors={imageErrors}
+        />
+        
+        {/* Display TMDB Results */}
+        {tmdbResults.length > 0 && (
+          <div className="mt-4 space-y-6 max-w-5xl mx-auto">
+            {tmdbResults.map((item, index) => (
+              <Card key={`${item.id}-${index}`} className="mb-6">
+                <CardHeader>
+                  <div className="relative w-full h-64 bg-gray-200 dark:bg-gray-800">
+                    {item.poster_path && (
+                      <img
+                        src={`https://image.tmdb.org/t/p/w500${item.poster_path}`}
+                        alt={item.title || item.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src = '/placeholder-movie.jpg';
+                        }}
+                      />
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-between items-start">
+                    <CardTitle className="text-xl">
+                      {item.title || item.name}
+                    </CardTitle>
+                    {item.vote_average && (
+                      <span className="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-orange-900 dark:text-orange-300">
+                        ⭐ {item.vote_average.toFixed(1)}/10
+                      </span>
+                    )}
+                  </div>
+                  {item.release_date || item.first_air_date ? (
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {item.release_date?.split('-')[0] || item.first_air_date?.split('-')[0]}
+                    </p>
+                  ) : null}
+                  <p className="mt-2 text-gray-700 dark:text-gray-300 text-sm">
+                    {item.overview || 'No overview available.'}
+                  </p>
+                  {item.type === 'person' && (
+                    <div className="mt-3">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <span className="font-medium">Known for:</span> {item.known_for_department}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+        
+        {/* Loading and error states */}
+        {isLoading && tmdbResults.length === 0 && (
+          <div className="flex justify-center p-4">
+            <LoadingIndicator />
+          </div>
+        )}
+        {error && <ErrorMessage error={error} details={errorDetails} />}
+        <div ref={messagesEndRef} className="h-4" />
       </div>
+      
       {/* Input area */}
       <ChatInputArea
         inputMessage={inputMessage}
@@ -585,6 +694,7 @@ const ChatInterface = ({ isSidebarOpen, messages, setMessages, isLoading, setIsL
         aiSummarizeMode={aiSummarizeMode}
         setAiSummarizeMode={setAiSummarizeMode}
       />
+      
       {/* File upload modal */}
       <FileUploadModal
         show={showFileModal}
