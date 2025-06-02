@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as firebaseSignOut } from 'firebase/auth';
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { signIn, signOut, useSession } from 'next-auth/react';
 import { initializeApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
 import firebaseConfig from '../../lib/firebaseConfig'; // Your Firebase config
 import Header from '../components/Header'; // Adjust if needed
 
@@ -17,47 +18,40 @@ export default function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
-  const [user, setUser] = useState(null);
 
-  const handleEmailSignUp = async (e) => {
+  const handleEmailAuth = async (e) => {
     e.preventDefault();
     setError(null);
+
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
-        email: userCredential.user.email,
-        createdAt: new Date(),
-      });
-      setUser(userCredential.user);
+      if (isSigningUp) {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        // Optional: Store user data in Firestore
+        await setDoc(doc(db, "users", userCredential.user.uid), {
+          email: userCredential.user.email,
+          createdAt: new Date(),
+        });
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+      }
+      // On successful authentication, you might want to redirect the user
+      // For email/password, Firebase handles the session.
+      // You might want to reload the page or push to another route.
+      window.location.reload(); // Simple reload to update session state
+
     } catch (error) {
       setError(error.message);
     }
   };
-
-  const handleEmailSignIn = async (e) => {
-    e.preventDefault();
-    setError(null);
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      setUser(userCredential.user);
-    } catch (error) {
-      setError(error.message);
-    }
-  };
-
-  const handleSignOut = async () => {
-    await firebaseSignOut(auth);
-    setUser(null);
-  };
+  const { data: session, status } = useSession();
 
   return (
     <div>
       <Header />
-      {user ? (
+      {session ? (
         <div className="container mx-auto p-4">
-          <h2 className="text-2xl font-bold mb-4">Welcome, {user.email}!</h2>
-          <button
-            onClick={handleSignOut}
+          <h2 className="text-2xl font-bold mb-4">Welcome, {session.user.email}!</h2>
+          <button onClick={() => signOut()}
             className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
           >
             Sign out
@@ -70,44 +64,64 @@ export default function AuthPage() {
               {isSigningUp ? 'Create an account' : 'Sign in to your account'}
             </h2>
 
-            {error && <p className="text-red-500 text-sm text-center mb-4">{error}</p>}
+            {error && <p className="text-red-500 text-sm text-center mb-4">{error}</p>} 
 
-            <form onSubmit={isSigningUp ? handleEmailSignUp : handleEmailSignIn} className="mb-4">
+            <form onSubmit={handleEmailAuth}>
               <div className="mb-4">
-                <label htmlFor="email" className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
-                  Email Address
+                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2" htmlFor="email">
+                  Email
                 </label>
                 <input
-                  type="email"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-300 dark:bg-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                   id="email"
+                  type="email"
+                  placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="shadow-sm border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-
               <div className="mb-6">
-                <label htmlFor="password" className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
+                <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2" htmlFor="password">
                   Password
                 </label>
                 <input
-                  type="password"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-300 dark:bg-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                   id="password"
+                  type="password"
+                  placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="shadow-sm border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                  type="submit"
+                >
+                  {isSigningUp ? 'Sign Up with Email' : 'Sign In with Email'}
+                </button>
+              </div>
+            </form>
 
-              <button
-                type="submit"
+            <div className="flex items-center justify-center mb-4">
+              <span className="text-gray-500 dark:text-gray-400">or</span>
+            </div>
+
+            {/* Google Sign-in/Sign-up button */}
+            <button onClick={() => signIn('google')}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                {isSigningUp ? 'Sign Up' : 'Sign In'}
+                {isSigningUp ? 'Sign Up with Google' : 'Sign In with Google'}
               </button>
-            </form>
+
+            {/* Github Sign-in button */}
+             <button onClick={() => signIn('github')}
+                className="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-4"
+              >
+                Sign In with Github
+            </button>
 
             <button
               onClick={() => setIsSigningUp(!isSigningUp)}
