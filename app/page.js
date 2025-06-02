@@ -1,137 +1,44 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import Header from './components/Header';
-import Sidebar from './components/Sidebar';
-import ChatInterface from './components/ChatInterface';
+import React from 'react';
+import Header from '@/app/components/Header';
+import Footer from '@/app/components/Footer';
+import { GoArrowUpRight } from "react-icons/go";
 
-const LOCAL_STORAGE_KEY = 'glimora_chats';
-
-function generateId() {
-  return Math.random().toString(36).substr(2, 9) + Date.now();
-}
-
-function getChatTitle(messages) {
-  const firstUserMsg = messages.find(m => m.role === 'user');
-  if (firstUserMsg && firstUserMsg.content) {
-    return firstUserMsg.content.slice(0, 30) + (firstUserMsg.content.length > 30 ? '...' : '');
-  }
-  return 'New Chat';
-}
-
-export default function Home() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [chats, setChats] = useState([]); // [{id, title, messages}]
-  const [activeChatId, setActiveChatId] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Load chats from localStorage on mount, but always start with a new chat
-  useEffect(() => {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    let loadedChats = [];
-    if (stored) {
-      try {
-        loadedChats = JSON.parse(stored);
-      } catch {}
-    }
-    // Always create a new chat on mount
-    const newId = generateId();
-    const newChat = { id: newId, title: 'Untitled Chat...', messages: [] };
-    setChats([newChat, ...loadedChats]);
-    setActiveChatId(newId);
-    setMessages([]);
-  }, []);
-
-  // Save chats to localStorage whenever chats change
-  useEffect(() => {
-    // Only save chats that have at least one message
-    const nonEmptyChats = chats.filter(chat => chat.messages && chat.messages.length > 0);
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(nonEmptyChats));
-  }, [chats]);
-
-  // When activeChatId changes, update messages
-  useEffect(() => {
-    const chat = chats.find(c => c.id === activeChatId);
-    setMessages(chat ? chat.messages : []);
-  }, [activeChatId, chats]);
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
-  // Create a new chat
-  const handleNewChat = useCallback(() => {
-    const newId = generateId();
-    const newChat = { id: newId, title: 'Untitled Chat...', messages: [] };
-    setChats(prev => [newChat, ...prev]);
-    setActiveChatId(newId);
-    setMessages([]);
-  }, []);
-
-  // Select a chat
-  const handleSelectChat = useCallback((id) => {
-    setActiveChatId(id);
-  }, []);
-
-  // When messages change, update the current chat in chats
-  const handleMessagesChange = useCallback((newMessages) => {
-    setMessages(newMessages);
-    setChats(prev =>
-      prev.map(chat =>
-        chat.id === activeChatId ? { ...chat, messages: newMessages, title: getChatTitle(newMessages) } : chat
-      )
-    );
-  }, [activeChatId]);
-
-  const handleEditChatTitle = useCallback((chatId, newTitle) => {
-    setChats(prev =>
-      prev.map(chat =>
-        chat.id === chatId ? { ...chat, title: newTitle } : chat
-      )
-    );
-  }, []);
-
-  const handleDeleteChat = useCallback((chatId) => {
-    setChats(prev => {
-      const updated = prev.filter(chat => chat.id !== chatId);
-      if (activeChatId === chatId) {
-        if (updated.length > 0) {
-          setActiveChatId(updated[0].id);
-          setMessages(updated[0].messages || []);
-        } else {
-          setActiveChatId(null);
-          setMessages([]);
-        }
-      }
-      return updated;
-    });
-  }, [activeChatId]);
-
-  return (
-    <main className="min-h-screen bg-white dark:bg-gray-800">
-      <Header toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
-      <div className="flex">
-        <Sidebar
-          isOpen={isSidebarOpen}
-          toggleSidebar={toggleSidebar}
-          chats={chats}
-          onSelectChat={handleSelectChat}
-          onNewChat={handleNewChat}
-          activeChatId={activeChatId}
-          onEditChatTitle={handleEditChatTitle}
-          onDeleteChat={handleDeleteChat}
-        />
-        <ChatInterface
-          isSidebarOpen={isSidebarOpen}
-          onSidebarToggle={toggleSidebar}
-          messages={messages}
-          setMessages={handleMessagesChange}
-          key={activeChatId}
-          isLoading={isLoading}
-          setIsLoading={setIsLoading}
-        />
+const WelcomeMessage = () => (
+  <div className="flex flex-col min-h-screen bg-white dark:bg-gray-900">
+    <Header />
+    <main className="flex-grow">
+      <div className="text-center items-center mt-[50%] md:mt-52 lg:mt-60 px-5 select-none mx-auto max-w-6xl">
+        <h2 className="text-5xl md:text-5xl lg:text-6xl font-bold mb-2 text-gray-700 dark:text-gray-300">
+          Discover Your Next Favorite Movie with
+           <span className=" animate-gradient bg-gradient-to-r from-orange-600 via-orange-400 to-orange-600 dark:from-orange-400 dark:via-orange-300 dark:to-orange-400 bg-[length:200%_auto] bg-clip-text text-transparent">  GLIMORA!</span>
+        </h2>
+        <p className="text-md md:text-lg text-gray-600 dark:text-gray-300 max-w-2xl md:max-w-3xl mx-auto leading-relaxed">
+          Tired of endless searching? Share your mood, a movie you enjoyed, or a story feeling, and 
+          <span className="font-bold"> GLIMORA&apos;s </span>
+          smart AI will recommend the perfect movie or TV show just for you!
+        </p>
+        <button
+          onClick={() => window.location.href = '/home'}
+          className="mt-8 px-8 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-semibold text-lg flex justify-center items-center gap-2 mx-auto"
+        >
+          Get Started for Free <GoArrowUpRight /> 
+        </button>
       </div>
     </main>
-  );
-}
+    <Footer />
+    <style jsx>{`
+      @keyframes gradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+      .animate-gradient {
+        animation: gradient 3s ease infinite;
+      }
+    `}</style>
+  </div>
+);
+
+export default WelcomeMessage; 
